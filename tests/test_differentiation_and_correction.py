@@ -86,6 +86,36 @@ class TestDifferentiationAndCorrection(unittest.TestCase):
                              f"Query '{q}' best match was {best['generic_name']}, expected {expected_generic}")
             self.assertGreaterEqual(best["confidence"], 70.0)
 
+    def test_shorthand_frequency_and_duration_expansions(self):
+        """Verifies expanded 4-slot timing patterns, alternate-day frequencies, and duration ranges."""
+        from medagent.abbreviation_expander import expand_frequency, expand_duration
+
+        # 4-slot frequencies
+        desc1, m1 = expand_frequency("1-0-0-1")
+        self.assertIn("Bedtime", desc1)
+        self.assertEqual(m1, 2)
+
+        desc2, m2 = expand_frequency("1-0-1-0")
+        self.assertIn("Morning & Night", desc2)
+        self.assertEqual(m2, 2)
+
+        desc3, m3 = expand_frequency("1-1-1-1")
+        self.assertIn("Four times daily", desc3)
+        self.assertEqual(m3, 4)
+
+        # Alternate days
+        desc4, m4 = expand_frequency("Tab QOD")
+        self.assertEqual(desc4, "Alternate days")
+        desc5, m5 = expand_frequency("alt die")
+        self.assertEqual(desc5, "Alternate days")
+
+        # Duration shorthand and ranges
+        self.assertEqual(expand_duration("x 3/7"), "3 days")
+        self.assertEqual(expand_duration("for 5/7"), "5 days")
+        self.assertEqual(expand_duration("x 2/52"), "2 weeks")
+        self.assertEqual(expand_duration("x 1/12"), "1 month(s)")
+        self.assertEqual(expand_duration("3-5 days"), "3-5 days")
+
 
 if __name__ == '__main__':
     unittest.main()

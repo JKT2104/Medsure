@@ -601,7 +601,107 @@ if "parsed_orders" in st.session_state:
                 }
             }
 
-            col_json, col_print = st.columns([1, 1])
+            # Generate Printable Patient Dispensing & Consultation Slip HTML
+            med_rows_html = "".join([
+                f"""<tr>
+                    <td style="padding: 10px 8px; border: 1px solid #cbd5e0; text-align: center;">{m['line']}</td>
+                    <td style="padding: 10px 8px; border: 1px solid #cbd5e0; font-weight: 600; color: #2b6cb0;">{m['drug']}</td>
+                    <td style="padding: 10px 8px; border: 1px solid #cbd5e0; text-align: center;">{m['strength']}</td>
+                    <td style="padding: 10px 8px; border: 1px solid #cbd5e0;">{m['frequency_and_instructions']}</td>
+                    <td style="padding: 10px 8px; border: 1px solid #cbd5e0; text-align: center; color: {'#276749' if m['status']=='Approved' else '#c05621'}; font-weight: bold;">{m['status']}</td>
+                </tr>""" for m in verified_data
+            ])
+
+            advice_rows_html = ""
+            if clinical_advice:
+                advice_items = "".join([f"<li style='margin-bottom: 4px;'><strong>[{ca.get('category', 'Care Directive')}]:</strong> {ca.get('advice_text', '')}</li>" for ca in clinical_advice])
+                advice_rows_html = f"""
+                <div style="margin-top: 16px; background: #fffaf0; border: 1px solid #feebc8; border-radius: 6px; padding: 14px;">
+                    <h4 style="margin: 0 0 8px 0; color: #c05621; font-size: 1rem;">📌 Non-Medication Instructions & Clinical Directives:</h4>
+                    <ul style="margin: 0; padding-left: 20px; color: #7b341e; font-size: 0.95rem;">{advice_items}</ul>
+                </div>
+                """
+
+            html_slip = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Patient Dispensing Slip - {patient_info.get('patient_name', 'Patient')}</title>
+<style>
+body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #2d3748; background: #fff; }}
+.header {{ border-bottom: 2px solid #3182ce; padding-bottom: 12px; margin-bottom: 16px; }}
+.title {{ color: #2b6cb0; margin: 0 0 4px 0; font-size: 1.4rem; }}
+.subtitle {{ margin: 0; color: #4a5568; font-size: 0.9rem; }}
+.meta-box {{ display: flex; justify-content: space-between; background: #edf2f7; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 0.9rem; }}
+table {{ width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9rem; }}
+th {{ background-color: #ebf8ff; color: #2b6cb0; padding: 10px 8px; border: 1px solid #cbd5e0; text-align: left; font-weight: 600; }}
+.stamp-box {{ margin-top: 24px; border-top: 1px dashed #a0aec0; padding-top: 14px; display: flex; justify-content: space-between; font-size: 0.85rem; color: #4a5568; }}
+@media print {{
+  body {{ margin: 0; padding: 12px; }}
+}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h2 class="title">🏥 {doctor_info.get('clinic_name', 'Clinical Practice') or 'Clinical Practice'}</h2>
+  <p class="subtitle"><strong>Prescribing Physician:</strong> {doctor_info.get('doctor_name', 'Medical Practitioner')} | <strong>Reg #:</strong> {doctor_info.get('reg_no', 'N/A')}</p>
+</div>
+<div class="meta-box">
+  <div>
+    <strong>Patient:</strong> {patient_info.get('patient_name', 'N/A')}<br>
+    <strong>Age / Sex:</strong> {patient_info.get('age_gender', 'N/A')}<br>
+    <strong>Weight:</strong> {patient_info.get('weight', 'N/A')}
+  </div>
+  <div style="text-align: right;">
+    <strong>Date:</strong> {patient_info.get('date', time.strftime('%d/%m/%Y'))}<br>
+    <strong>Diagnosis:</strong> {patient_info.get('diagnosis', 'Clinical Consultation')}<br>
+    <strong>Safety Clearance:</strong> <span style="color: #276749; font-weight: bold;">PASSED</span>
+  </div>
+</div>
+<h3 style="color: #2d3748; font-size: 1.1rem; margin-top: 12px;">💊 Prescribed Medications & Dosing Schedule:</h3>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 5%; text-align: center;">#</th>
+      <th style="width: 32%;">Medication / Active Formula</th>
+      <th style="width: 15%; text-align: center;">Strength</th>
+      <th style="width: 33%;">Dosing Regimen & Instructions</th>
+      <th style="width: 15%; text-align: center;">Verification</th>
+    </tr>
+  </thead>
+  <tbody>
+    {med_rows_html}
+  </tbody>
+</table>
+{advice_rows_html}
+<div class="stamp-box">
+  <div>
+    <strong>Reviewing Pharmacist:</strong> {pharmacist_name}<br>
+    <em>Signed & Dispatched: {time.strftime('%Y-%m-%d %H:%M:%S')}</em>
+  </div>
+  <div style="text-align: right;">
+    <strong>Verification Notes:</strong> {pharmacist_notes}<br>
+    <span style="display: inline-block; margin-top: 6px; border: 1px solid #48bb78; color: #276749; padding: 2px 8px; border-radius: 4px; font-weight: bold;">
+      ✓ CLINICALLY CLEARED FOR DISPENSING
+    </span>
+  </div>
+</div>
+</body>
+</html>"""
+
+            st.markdown("#### 🖨️ Official Patient Dispensing & Consultation Slip:")
+            with st.expander("👁️ View Printable Slip Preview", expanded=True):
+                st.components.v1.html(html_slip, height=380, scrolling=True)
+
+            col_slip, col_json = st.columns([1, 1])
+            with col_slip:
+                st.download_button(
+                    "🖨️ Download Printable Patient Dispensing Slip (HTML)",
+                    data=html_slip,
+                    file_name=f"dispensing_slip_{patient_info.get('patient_name', 'patient').replace(' ', '_')}.html",
+                    mime="text/html",
+                    type="primary"
+                )
             with col_json:
                 st.download_button(
                     "📥 Download FHIR/JSON Digital Prescription",
@@ -609,7 +709,8 @@ if "parsed_orders" in st.session_state:
                     file_name="verified_prescription_fhir.json",
                     mime="application/json"
                 )
-            with col_print:
+
+            with st.expander("🔍 View Raw FHIR/JSON Digital Prescription Payload"):
                 st.code(json.dumps(export_payload, indent=2), language="json")
 
 st.markdown("---")

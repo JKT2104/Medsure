@@ -17,6 +17,11 @@ FREQUENCY_MAP = {
     "1-1-0": "Twice daily (Morning & Noon)",
     "2-0-2": "Two tablets twice daily (Morning & Night)",
     "1/2-0-1/2": "Half tablet twice daily",
+    "1-0-0-1": "Twice daily (Morning & Bedtime)",
+    "1-0-1-0": "Twice daily (Morning & Night)",
+    "1-1-1-1": "Four times daily (Morning, Noon, Evening & Bedtime)",
+    "1-1-1-0": "Three times daily (Morning, Noon & Evening)",
+    "0-1-0-1": "Twice daily (Noon & Bedtime)",
 
     # Latin / Common acronyms
     "od": "Once daily",
@@ -130,7 +135,16 @@ def expand_frequency(text: str) -> Tuple[Optional[str], Optional[int]]:
     # Normalize spaced q-hour intervals (e.g. "q 6h", "q 4h" -> "q6h", "q4h")
     text_clean = re.sub(r'\bq\s*(\d{1,2})\s*h\b', r'q\1h', text_clean)
     
-    # Check numeric patterns first (e.g. 1-0-1, 1 - 0 - 1, 1-0-0)
+    # Check 4-slot numeric patterns first (e.g. 1-0-1-0, 1-0-0-1, 1-1-1-1)
+    four_match = re.search(r'\b([0-2])\s*[-–]\s*([0-2])\s*[-–]\s*([0-2])\s*[-–]\s*([0-2])\b', text_clean)
+    if four_match:
+        m, noon, eve, night = map(int, four_match.groups())
+        total_pills = m + noon + eve + night
+        key = f"{m}-{noon}-{eve}-{night}"
+        desc = FREQUENCY_MAP.get(key, f"{total_pills} times daily ({key})")
+        return desc, total_pills
+
+    # Check 3-slot numeric patterns (e.g. 1-0-1, 1 - 0 - 1, 1-0-0)
     num_match = re.search(r'\b([0-2])\s*[-–]\s*([0-2])\s*[-–]\s*([0-2])\b', text_clean)
     if num_match:
         m, a, n = map(int, num_match.groups())
@@ -152,6 +166,10 @@ def expand_frequency(text: str) -> Tuple[Optional[str], Optional[int]]:
     circle_match = re.search(r'\b[0o]\s*[-–—_.]+\s*[0o]\b', text_clean)
     if circle_match:
         return "Twice daily (Morning & Night, 1-0-1)", 2
+
+    # Alternate days (alt die / qod)
+    if re.search(r'\b(?:alt\s+die|qod)\b', text_clean):
+        return "Alternate days", 1
 
     # Check Latin/Standard abbreviations
     tokens = re.findall(r'[a-z0-9/]+', text_clean)
@@ -176,20 +194,20 @@ def expand_duration(text: str) -> Optional[str]:
     """Identifies quirky duration shorthands like 'x 5d', 'x 3/7', 'x 2/52', 'for 10 days'."""
     text_clean = text.lower().strip()
 
-    # Pattern: x 3/7 (3 days), 5/7 (5 days)
-    slash_days = re.search(r'(?:x\s*)?(\d{1,2})\s*/\s*7\b', text_clean)
+    # Pattern: x 3/7 (3 days), 5/7 (5 days), for 7/7
+    slash_days = re.search(r'(?:x\s*|for\s*|\b)?(\d{1,2})\s*/\s*7\b', text_clean)
     if slash_days:
         days = slash_days.group(1)
         return f"{days} days"
 
-    # Pattern: x 2/52 (2 weeks)
-    slash_weeks = re.search(r'(?:x\s*)?(\d{1,2})\s*/\s*52\b', text_clean)
+    # Pattern: x 2/52 (2 weeks), for 1/52
+    slash_weeks = re.search(r'(?:x\s*|for\s*|\b)?(\d{1,2})\s*/\s*52\b', text_clean)
     if slash_weeks:
         weeks = slash_weeks.group(1)
         return f"{weeks} weeks"
 
-    # Pattern: x 1/12 (1 month)
-    slash_months = re.search(r'(?:x\s*)?(\d{1,2})\s*/\s*12\b', text_clean)
+    # Pattern: x 1/12 (1 month), for 2/12
+    slash_months = re.search(r'(?:x\s*|for\s*|\b)?(\d{1,2})\s*/\s*12\b', text_clean)
     if slash_months:
         months = slash_months.group(1)
         return f"{months} month(s)"
@@ -210,10 +228,10 @@ def expand_duration(text: str) -> Optional[str]:
         d = ocr_days_match.group(1)
         return f"{d} days"
 
-    # Pattern: x 5 d, x 5 days, 5d, 7 days, 15dag, 10day, x5elay, 5dys
-    days_match = re.search(r'(?:x\s*|for\s*|\b)([1-9]\d?)\s*(?:d|days|day|dag|dags|dys|elay)\b', text_clean, flags=re.IGNORECASE)
+    # Pattern: x 5 d, x 5 days, 5d, 7 days, 15dag, 10day, x5elay, 5dys, 3-5 days
+    days_match = re.search(r'(?:x\s*|for\s*|\b)([1-9]\d?(?:\s*(?:[-–]|to)\s*[1-9]\d?)?)\s*(?:d|days|day|dag|dags|dys|elay)\b', text_clean, flags=re.IGNORECASE)
     if days_match:
-        d = days_match.group(1)
+        d = re.sub(r'\s+', '', days_match.group(1))
         return f"{d} days"
 
     # Pattern: 1 month, 3 months (strictly NOT matching 625m or dosage numbers)

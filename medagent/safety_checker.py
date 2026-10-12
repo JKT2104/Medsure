@@ -22,7 +22,7 @@ LASA_PAIRS = [
         "generics": ("Clonidine", "Clonazepam"),
         "tall_man": ("cloniDINE", "clonaZEPAM"),
         "risk_level": "CRITICAL",
-        "description": "Clonidine (antihypertensive) confused with Clonazepam (sedative/anticonvulsant). Risk of severe hypotension or excessive sedation."
+        "description": "Clonidine (antihypertensive) confused with Clonazepam (sedative/anticonvulgant). Risk of severe hypotension or excessive sedation."
     },
     {
         "pair": ("Hydralazine", "Hydroxyzine"),
@@ -51,6 +51,34 @@ LASA_PAIRS = [
         "tall_man": ("amLODIPine", "aMILoride"),
         "risk_level": "WARNING",
         "description": "Calcium channel blocker confused with potassium-sparing diuretic."
+    },
+    {
+        "pair": ("Azithral", "Allegra"),
+        "generics": ("Azithromycin", "Fexofenadine"),
+        "tall_man": ("azithroMYCIN (Azithral)", "fexofenADINE (Allegra)"),
+        "risk_level": "WARNING",
+        "description": "Azithromycin (macrolide antibiotic) confused with Allegra/Fexofenadine (antihistamine). Risk of untreated bacterial infection or inappropriate antibiotic use."
+    },
+    {
+        "pair": ("Taxim-O", "Taxol"),
+        "generics": ("Cefixime", "Paclitaxel"),
+        "tall_man": ("taxim-O (Cefixime)", "TAXOL (Paclitaxel)"),
+        "risk_level": "CRITICAL",
+        "description": "Oral antibiotic (Cefixime) confused with IV antineoplastic chemotherapeutic (Paclitaxel). Severe toxicity risk if chemotherapeutic misidentified."
+    },
+    {
+        "pair": ("Metformin", "Metoprolol"),
+        "generics": ("Metformin", "Metoprolol"),
+        "tall_man": ("metFORMIN", "metOPROLOL"),
+        "risk_level": "WARNING",
+        "description": "Metformin (antidiabetic) confused with Metoprolol (beta-blocker). Risk of uncontrolled hyperglycemia or profound bradycardia/hypotension."
+    },
+    {
+        "pair": ("Losar", "Lasix"),
+        "generics": ("Losartan", "Furosemide"),
+        "tall_man": ("loSARtan (Losar)", "laSIX (Furosemide)"),
+        "risk_level": "WARNING",
+        "description": "Losar/Losartan (ARB antihypertensive) confused with Lasix/Furosemide (potent loop diuretic). Risk of profound dehydration or electrolyte depletion."
     }
 ]
 
@@ -139,8 +167,132 @@ DDI_RULES = [
         "title": "Severe Duplicate NSAID Therapy",
         "description": "Co-prescribing Ketorolac with Diclofenac (in Enzoflam) creates profound double-NSAID COX inhibition, multiplying risk of severe GI hemorrhage and acute renal failure.",
         "recommendation": "Contraindicated. Discontinue one NSAID agent immediately."
+    },
+    {
+        "drugs": ("Ibuprofen", "Aspirin"),
+        "severity": "CRITICAL",
+        "title": "Aspirin Antiplatelet Antagonism & Severe GI Bleeding Risk",
+        "description": "Ibuprofen competitively blocks the irreversible acetylation of platelet COX-1 by low-dose Aspirin, diminishing its cardioprotective effect. Concurrently, combining multiple NSAIDs multiplies gastrointestinal ulceration and major haemorrhage risk.",
+        "recommendation": "If cardioprotective aspirin is required, take aspirin at least 30 minutes to 2 hours before ibuprofen, or substitute with Paracetamol for analgesia. Add PPI gastroprotection."
+    },
+    {
+        "drugs": ("Ibuprofen", "Aceclofenac + Paracetamol + Serratiopeptidase"),
+        "severity": "CRITICAL",
+        "title": "Duplicate NSAID Therapy (Ibuprofen + Aceclofenac)",
+        "description": "Concurrent administration of two systemic NSAIDs provides no additional analgesia while substantially compounding the hazard of upper GI ulceration, bleeding, and acute renal impairment.",
+        "recommendation": "Contraindicated duplicate NSAID regimen. Discontinue one anti-inflammatory agent immediately."
+    },
+    {
+        "drugs": ("Ibuprofen", "Diclofenac + Paracetamol + Serratiopeptidase"),
+        "severity": "CRITICAL",
+        "title": "Duplicate NSAID Therapy (Ibuprofen + Diclofenac)",
+        "description": "Co-prescribing multiple NSAIDs compounds nephrotoxicity and gastrointestinal ulceration risk without incremental analgesic benefit.",
+        "recommendation": "Discontinue one NSAID agent; maintain monotherapy with gastroprotection if required."
+    },
+    {
+        "drugs": ("Aceclofenac + Paracetamol + Serratiopeptidase", "Ketorolac Tromethamine"),
+        "severity": "CRITICAL",
+        "title": "Severe Duplicate NSAID Therapy (Aceclofenac + Ketorolac)",
+        "description": "Combining Ketorolac with Aceclofenac causes extreme double-COX inhibition, drastically escalating risk of fatal GI bleeding, perforation, and acute renal failure.",
+        "recommendation": "Contraindicated. Ketorolac must never be combined with another NSAID or aspirin."
+    },
+    {
+        "drugs": ("Ciprofloxacin", "Aluminium Hydroxide + Magnesium Hydroxide + Simethicone"),
+        "severity": "MAJOR",
+        "title": "Chelation & Antibiotic Bioavailability Impairment",
+        "description": "Polyvalent metal cations (Al3+, Mg2+) in antacids bind to Ciprofloxacin, forming insoluble chelate complexes that reduce antibiotic absorption by up to 90%, risking therapeutic treatment failure.",
+        "recommendation": "Administer Ciprofloxacin at least 2 hours before or 4 hours after antacids containing aluminium, magnesium, or calcium."
+    },
+    {
+        "drugs": ("Ofloxacin", "Aluminium Hydroxide + Magnesium Hydroxide + Simethicone"),
+        "severity": "MAJOR",
+        "title": "Chelation & Fluoroquinolone Malabsorption",
+        "description": "Multivalent cations in antacids precipitate Ofloxacin absorption failure through cation chelation.",
+        "recommendation": "Space administration: take Ofloxacin 2 hours prior or 4 to 6 hours after antacids."
+    },
+    {
+        "drugs": ("Azithromycin", "Ciprofloxacin"),
+        "severity": "MAJOR",
+        "title": "Additive QTc Prolongation Risk",
+        "description": "Concurrent use of macrolide and fluoroquinolone antibiotics exerts additive electrophysiological effects on ventricular repolarization, increasing risk of QTc prolongation and Torsades de Pointes.",
+        "recommendation": "Monitor ECG QTc interval, especially in patients with pre-existing cardiac conditions or electrolyte derangements."
+    },
+    {
+        "drugs": ("Escitalopram + Clonazepam", "Ciprofloxacin"),
+        "severity": "MAJOR",
+        "title": "Additive QTc Prolongation & Seizure Risk",
+        "description": "Ciprofloxacin can inhibit CYP1A2/CYP3A4 and additively prolong cardiac QTc interval and lower seizure threshold when paired with Escitalopram.",
+        "recommendation": "Use alternative antibiotic if feasible; baseline and periodic ECG monitoring recommended."
+    },
+    {
+        "drugs": ("Telmisartan", "Ibuprofen"),
+        "severity": "MAJOR",
+        "title": "Blunted Antihypertensive Effect & Acute Renal Impairment Risk",
+        "description": "NSAIDs inhibit renal vasodilatory prostaglandins, decreasing renal perfusion and directly counteracting the blood pressure lowering effect of ARBs (Telmisartan). Increases risk of acute kidney injury (AKI).",
+        "recommendation": "Avoid chronic concurrent use; monitor renal function, serum potassium, and blood pressure regularly."
+    },
+    {
+        "drugs": ("Telmisartan", "Aceclofenac + Paracetamol + Serratiopeptidase"),
+        "severity": "MAJOR",
+        "title": "Impaired Renal Perfusion & Antihypertensive Attenuation",
+        "description": "Aceclofenac attenuates ARB antihypertensive efficacy and impairs renal blood flow, heightening acute kidney injury risk.",
+        "recommendation": "Use short-course analgesic only, ensure adequate hydration, and monitor blood pressure."
+    },
+    {
+        "drugs": ("Losartan", "Ibuprofen"),
+        "severity": "MAJOR",
+        "title": "Reduced Antihypertensive Efficacy & Nephrotoxicity Risk",
+        "description": "Concurrent NSAID therapy attenuates Losartan's antihypertensive effect and increases risk of acute renal failure.",
+        "recommendation": "Monitor BP and renal profile; use Paracetamol when possible."
+    },
+    {
+        "drugs": ("Clopidogrel", "Ibuprofen"),
+        "severity": "CRITICAL",
+        "title": "Synergistic Antiplatelet Inhibition & Major GI Bleed Risk",
+        "description": "Dual inhibition of platelet aggregation and gastric mucosal protection elevates risk of gastrointestinal hemorrhage.",
+        "recommendation": "Avoid combination if possible; prescribe concurrent PPI gastroprotection and monitor hemoglobin."
+    },
+    {
+        "drugs": ("Clopidogrel", "Ketorolac Tromethamine"),
+        "severity": "CRITICAL",
+        "title": "Severe Bleeding & Hemorrhage Contraindication",
+        "description": "Ketorolac combined with antiplatelet therapy (Clopidogrel) produces profound bleeding risk and is contraindicated.",
+        "recommendation": "Contraindicated. Discontinue Ketorolac; select alternative analgesic."
+    },
+    {
+        "drugs": ("Tramadol", "Escitalopram + Clonazepam"),
+        "severity": "CRITICAL",
+        "title": "Severe Serotonin Syndrome & Seizure Risk",
+        "description": "Tramadol inhibits serotonin and norepinephrine reuptake. Combining with an SSRI (Escitalopram) sharply increases the risk of life-threatening Serotonin Syndrome and lowers the seizure threshold.",
+        "recommendation": "Avoid concurrent use or use with extreme caution. Watch for autonomic instability, neuromuscular hyperreactivity, and mental status changes."
+    },
+    {
+        "drugs": ("Digoxin", "Spironolactone"),
+        "severity": "MAJOR",
+        "title": "Elevated Serum Digoxin Concentration",
+        "description": "Spironolactone reduces digoxin clearance and may interfere with digoxin assays.",
+        "recommendation": "Monitor serum digoxin concentration and watch for digitalis toxicity (nausea, arrhythmias)."
     }
 ]
+
+
+def _drug_matches(target_spec: str, prescribed_drug: str) -> bool:
+    """Checks if a target drug name matches a prescribed medication or one of its active components."""
+    if not prescribed_drug or not target_spec:
+        return False
+    t_clean = re.sub(r'\(.*?\)', '', target_spec).strip().lower()
+    p_clean = re.sub(r'\(.*?\)', '', prescribed_drug).strip().lower()
+    if t_clean == p_clean:
+        return True
+
+    prescribed_components = [re.sub(r'\(.*?\)', '', c).strip().lower() for c in prescribed_drug.split("+")]
+    target_components = [re.sub(r'\(.*?\)', '', c).strip().lower() for c in target_spec.split("+")]
+
+    if len(target_components) == 1 and target_components[0] in prescribed_components:
+        return True
+    if len(target_components) > 1 and all(tc in prescribed_components for tc in target_components):
+        return True
+    return False
 
 
 class SafetyChecker:
@@ -196,12 +348,19 @@ class SafetyChecker:
                     })
                     overall_status = "CRITICAL"
 
-        # 3. Paediatric Weight-Based Dosage Checks
+        # 3. Paediatric Weight-Based Dosage Checks & Contraindications
         patient_wt_kg = None
         if patient_details and patient_details.get("weight"):
             wt_match = re.search(r'(\d+(?:\.\d+)?)\s*kg', str(patient_details["weight"]).lower())
             if wt_match:
                 patient_wt_kg = float(wt_match.group(1))
+
+        patient_age_yrs = None
+        if patient_details:
+            age_raw = str(patient_details.get("age_gender", "") or patient_details.get("age", ""))
+            age_m = re.search(r'\b(\d{1,3})\s*(?:y|yr|yrs|year|years)?\b', age_raw, re.IGNORECASE)
+            if age_m:
+                patient_age_yrs = float(age_m.group(1))
 
         if patient_wt_kg and patient_wt_kg > 0:
             for i, order in enumerate(orders):
@@ -260,6 +419,41 @@ class SafetyChecker:
                             "action": "Safe paediatric dose verified."
                         })
 
+        # Paediatric Absolute Contraindication: Aspirin (Reye's syndrome)
+        is_paediatric = (patient_age_yrs is not None and patient_age_yrs < 16) or (patient_wt_kg and patient_wt_kg < 40.0)
+        if is_paediatric:
+            for i, order in enumerate(orders):
+                val_name = order.get("validated_drug", "")
+                if _drug_matches("Aspirin", val_name):
+                    alerts.append({
+                        "category": "PAEDIATRIC_CONTRAINDICATION",
+                        "severity": "CRITICAL",
+                        "line_index": i,
+                        "target_drug": val_name,
+                        "title": "Fatal Reye's Syndrome Risk (Aspirin in Paediatrics)",
+                        "message": f"Aspirin is strictly contraindicated in children and adolescents under 16 years of age (patient: {patient_details.get('age_gender', '') or f'{patient_wt_kg} kg'}). Administration during viral illness precipitates Reye's syndrome—a severe, frequently fatal condition causing acute non-inflammatory encephalopathy and fatty liver failure.",
+                        "action": "Absolute contraindication. Discontinue Aspirin immediately; use Paracetamol or Ibuprofen for analgesia and fever."
+                    })
+                    overall_status = "CRITICAL"
+
+        # Paediatric Fluoroquinolone Restriction (< 18 years): Arthropathy & cartilage toxicity
+        is_adolescent = (patient_age_yrs is not None and patient_age_yrs < 18) or (patient_wt_kg and patient_wt_kg < 45.0)
+        if is_adolescent:
+            for i, order in enumerate(orders):
+                val_name = order.get("validated_drug", "")
+                if any(_drug_matches(fq, val_name) for fq in ["Ciprofloxacin", "Ofloxacin", "Norfloxacin + Tinidazole"]):
+                    alerts.append({
+                        "category": "PAEDIATRIC_WARNING",
+                        "severity": "MAJOR",
+                        "line_index": i,
+                        "target_drug": val_name,
+                        "title": f"Paediatric Arthropathy & Cartilage Toxicity Alert ({val_name})",
+                        "message": f"Fluoroquinolones ({val_name}) are restricted in paediatric patients under 18 years due to established risk of cartilage erosion, arthropathy, and tendinopathy in weight-bearing joints.",
+                        "action": "Evaluate risk-benefit ratio. Consider safer paediatric antibiotic alternatives (e.g. Amoxicillin-Clavulanate, Cefixime, Azithromycin)."
+                    })
+                    if overall_status != "CRITICAL":
+                        overall_status = "CRITICAL"
+
         # 4. Look-Alike Sound-Alike (LASA) Checks
         prescribed_generics = [order.get("validated_drug") for order in orders if order.get("validated_drug")]
         for i, order in enumerate(orders):
@@ -285,15 +479,21 @@ class SafetyChecker:
                     elif overall_status == "SAFE":
                         overall_status = "WARNING"
 
-        # 4. Drug-Drug Interactions (DDI) Checks
+        # 5. Drug-Drug Interactions (DDI) Checks
         valid_orders = [o for o in orders if o.get("validated_drug") and o.get("validated_drug") != "Unverified / Unknown"]
+        seen_ddi_keys = set()
         for o1, o2 in combinations(valid_orders, 2):
             d1 = o1.get("validated_drug")
             d2 = o2.get("validated_drug")
 
             for rule in DDI_RULES:
-                pair = rule["drugs"]
-                if (d1 == pair[0] and d2 == pair[1]) or (d1 == pair[1] and d2 == pair[0]):
+                p1, p2 = rule["drugs"]
+                if (_drug_matches(p1, d1) and _drug_matches(p2, d2)) or (_drug_matches(p1, d2) and _drug_matches(p2, d1)):
+                    ddi_key = (rule["title"], min(d1, d2), max(d1, d2))
+                    if ddi_key in seen_ddi_keys:
+                        continue
+                    seen_ddi_keys.add(ddi_key)
+
                     alerts.append({
                         "category": "DRUG_INTERACTION",
                         "severity": rule["severity"],

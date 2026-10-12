@@ -69,6 +69,71 @@ class TestSafetyChecker(unittest.TestCase):
         self.assertGreater(len(overdose_alerts), 0)
         self.assertIn("13.25", overdose_alerts[0]["message"])
 
+    def test_combiflam_aspirin_component_ddi(self):
+        """Combiflam (Ibuprofen + Paracetamol) co-prescribed with Aspirin triggers critical antiplatelet DDI."""
+        orders = [
+            clinical_parser.parse_line("Tab Combiflam 1-0-1 x 5d", ocr_confidence=95.0),
+            clinical_parser.parse_line("Tab Ecosprin 75mg 0-1-0 x 30d", ocr_confidence=95.0)
+        ]
+        eval_result = safety_checker.evaluate_prescription(orders)
+        self.assertEqual(eval_result["overall_status"], "CRITICAL")
+        ddi_alerts = [a for a in eval_result["alerts"] if a["category"] == "DRUG_INTERACTION"]
+        self.assertGreater(len(ddi_alerts), 0)
+        self.assertTrue(any("Aspirin Antiplatelet Antagonism" in a["title"] for a in ddi_alerts))
+
+    def test_ciprofloxacin_antacid_chelation_ddi(self):
+        """Ciprofloxacin with Antacid (Gelusil) triggers major cation chelation warning."""
+        orders = [
+            clinical_parser.parse_line("Tab Ciplox 500mg 1-0-1 x 5d", ocr_confidence=95.0),
+            clinical_parser.parse_line("Syp Gelusil 10ml TDS", ocr_confidence=95.0)
+        ]
+        eval_result = safety_checker.evaluate_prescription(orders)
+        self.assertEqual(eval_result["overall_status"], "CRITICAL")
+        ddi_alerts = [a for a in eval_result["alerts"] if a["category"] == "DRUG_INTERACTION"]
+        self.assertTrue(any("Chelation" in a["title"] for a in ddi_alerts))
+
+    def test_azithromycin_ciprofloxacin_qtc_ddi(self):
+        """Macrolide (Azithral) + Fluoroquinolone (Ciplox) triggers additive QTc prolongation warning."""
+        orders = [
+            clinical_parser.parse_line("Tab Azithral 500mg 1-0-0 x 3d", ocr_confidence=95.0),
+            clinical_parser.parse_line("Tab Ciplox 500mg 1-0-1 x 5d", ocr_confidence=95.0)
+        ]
+        eval_result = safety_checker.evaluate_prescription(orders)
+        self.assertEqual(eval_result["overall_status"], "CRITICAL")
+        ddi_alerts = [a for a in eval_result["alerts"] if a["category"] == "DRUG_INTERACTION"]
+        self.assertTrue(any("QTc Prolongation" in a["title"] for a in ddi_alerts))
+
+    def test_paediatric_aspirin_reyes_contraindication(self):
+        """Prescribing Aspirin (Ecosprin) to a child triggers critical Reye's syndrome contraindication."""
+        order = clinical_parser.parse_line("Tab Ecosprin 75mg 1-0-0 x 7d", ocr_confidence=95.0)
+        eval_result = safety_checker.evaluate_prescription([order], patient_details={"age_gender": "5 Y / Male"})
+        self.assertEqual(eval_result["overall_status"], "CRITICAL")
+        reye_alerts = [a for a in eval_result["alerts"] if a["category"] == "PAEDIATRIC_CONTRAINDICATION"]
+        self.assertGreater(len(reye_alerts), 0)
+        self.assertIn("Reye's Syndrome", reye_alerts[0]["title"])
+
+    def test_paediatric_fluoroquinolone_warning(self):
+        """Prescribing Ciprofloxacin to a child triggers arthropathy & cartilage toxicity warning."""
+        order = clinical_parser.parse_line("Tab Ciplox 250mg 1-0-1 x 5d", ocr_confidence=95.0)
+        eval_result = safety_checker.evaluate_prescription([order], patient_details={"age_gender": "8 Y / Female"})
+        self.assertEqual(eval_result["overall_status"], "CRITICAL")
+        arthro_alerts = [a for a in eval_result["alerts"] if a["category"] == "PAEDIATRIC_WARNING"]
+        self.assertGreater(len(arthro_alerts), 0)
+        self.assertIn("Arthropathy", arthro_alerts[0]["title"])
+
+    def test_additional_lasa_pairs(self):
+        """Verifies expanded LASA pairs (Taxim-O vs Taxol, Azithral vs Allegra, Losar vs Lasix)."""
+        orders = [
+            clinical_parser.parse_line("Tab Taxim-O 200mg 1-0-1 x 5d", ocr_confidence=90.0),
+            clinical_parser.parse_line("Tab Losar 50mg 1-0-0 x 30d", ocr_confidence=90.0)
+        ]
+        eval_result = safety_checker.evaluate_prescription(orders)
+        lasa_alerts = [a for a in eval_result["alerts"] if a["category"] == "LASA_WARNING"]
+        self.assertGreaterEqual(len(lasa_alerts), 2)
+        titles = " ".join([a["title"] for a in lasa_alerts])
+        self.assertIn("TAXOL", titles)
+        self.assertIn("laSIX", titles)
+
 
 if __name__ == '__main__':
     unittest.main()
