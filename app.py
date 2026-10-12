@@ -323,11 +323,19 @@ if needs_analysis:
         # Combine clinical advice
         combined_advice = list(clinical_parser.clinical_advice)
         for adv in doc_analysis.get("clinical_advice", []):
-            adv_text = adv.strip() if isinstance(adv, str) else str(adv)
-            if adv_text and not any(adv_text.lower() in existing.get("advice_text", "").lower() for existing in combined_advice):
+            if isinstance(adv, dict):
+                adv_text = adv.get("advice_text") or adv.get("text") or str(adv)
+                category = adv.get("category") or adv.get("advice_type") or "Clinical Advice / Patient Care"
+                duration = adv.get("duration", "Unstated")
+            else:
+                adv_text = str(adv).strip()
+                category = "Clinical Advice / Patient Care"
+                duration = "Unstated"
+            if adv_text and not any(adv_text.lower() in str(existing.get("advice_text", "")).lower() for existing in combined_advice):
                 combined_advice.append({
-                    "advice_type": "Patient Care / Follow-Up",
                     "advice_text": adv_text,
+                    "category": category,
+                    "duration": duration,
                     "confidence": 98.0
                 })
         st.session_state["clinical_advice"] = combined_advice
@@ -413,7 +421,14 @@ if "parsed_orders" in st.session_state:
             if clinical_advice:
                 st.markdown("##### 🩺 Non-Medication Clinical Advice & Patient Care:")
                 for adv in clinical_advice:
-                    st.info(f"📋 **{adv['category']}**: **{adv['advice_text']}** (Duration: `{adv['duration']}`)")
+                    if isinstance(adv, dict):
+                        cat = adv.get("category") or adv.get("advice_type") or "Clinical Advice"
+                        txt = adv.get("advice_text") or adv.get("text") or str(adv)
+                        dur = adv.get("duration", "Unstated")
+                        dur_str = f" (Duration: `{dur}`)" if dur and dur != "Unstated" else ""
+                        st.info(f"📋 **{cat}**: **{txt}**{dur_str}")
+                    else:
+                        st.info(f"📋 **Clinical Advice**: **{adv}**")
             else:
                 st.write("No non-medication clinical advice or post-operative directives detected on this prescription.")
 
