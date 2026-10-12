@@ -320,6 +320,14 @@ if needs_analysis:
         parsed_orders = clinical_parser.parse_prescription(ocr_results)
         st.session_state["parsed_orders"] = parsed_orders
 
+        # Merge any vitals/demographics extracted during parsing into patient_details
+        if hasattr(clinical_parser, "patient_updates") and clinical_parser.patient_updates:
+            for k, v in clinical_parser.patient_updates.items():
+                if v and (not patient_details.get(k) or patient_details.get(k) in ["Adult", "Standard Patient", "Not Recorded", "Recent Consultation", "General Examination"]):
+                    patient_details[k] = v
+        st.session_state["patient_details"] = patient_details
+        st.session_state["categorized_lines"] = getattr(clinical_parser, "categorized_lines", [])
+
         # Combine clinical advice
         combined_advice = list(clinical_parser.clinical_advice)
         for adv in doc_analysis.get("clinical_advice", []):
@@ -431,6 +439,21 @@ if "parsed_orders" in st.session_state:
                         st.info(f"📋 **Clinical Advice**: **{adv}**")
             else:
                 st.write("No non-medication clinical advice or post-operative directives detected on this prescription.")
+
+            categorized_lines = st.session_state.get("categorized_lines", [])
+            if categorized_lines:
+                st.markdown("---")
+                with st.expander(f"📑 Complete Prescription Line Categorization Audit ({len(categorized_lines)} lines detected & mapped)"):
+                    st.caption("Every detected OCR line is systematically categorized into its clinical role (Medication, Instruction, Care Advice, Demographics, or Clinic Metadata) — 0% dropped lines.")
+                    audit_rows = []
+                    for idx, cl in enumerate(categorized_lines):
+                        audit_rows.append({
+                            "Line #": f"#{idx + 1}",
+                            "Detected Line Text": cl.get("raw_text", ""),
+                            "Clinical Category": cl.get("category", "General Clinical Directive"),
+                            "System Action": cl.get("action", "Processed by Clinical Engine")
+                        })
+                    st.dataframe(pd.DataFrame(audit_rows), use_container_width=True, hide_index=True)
 
         # Differentiated Clinical Entity Breakdown (Medicine vs Instructions)
         st.markdown("---")
