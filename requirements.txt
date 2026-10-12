@@ -1,0 +1,13 @@
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.35.0
+sentencepiece>=0.2.0
+tiktoken>=0.7.0
+rapidfuzz>=3.5.0
+rapidocr_onnxruntime>=1.2.0
+onnxruntime>=1.16.0
+opencv-python>=4.8.0
+streamlit>=1.30.0
+pillow>=10.0.0
+numpy>=1.24.0
+pandas>=2.0.0
